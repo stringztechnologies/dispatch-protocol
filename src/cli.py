@@ -579,5 +579,69 @@ def discover(ssh_host: str | None, is_local: bool, n8n_url: str, n8n_key: str | 
     console.print(summary)
 
 
+@cli.command()
+@click.option("--input", "-i", "input_dir", default=".", help="Directory with agents.yaml, tasks/, health.yaml (from discover)")
+@click.option("--output", "-o", default="plan.yaml", help="Output plan file")
+@click.option("--accept", is_flag=True, help="Auto-accept the plan (skip confirmation)")
+def plan(input_dir: str, output: str, accept: bool):
+    """Analyze infrastructure and propose task ownership."""
+    from src.planner import generate_plan, print_plan, save_plan
+
+    inp = Path(input_dir)
+
+    # We need discovery results — re-discover or load from existing files
+    console.print("[bold blue]Analyzing infrastructure...[/]\n")
+
+    # Run discovery to get fresh data
+    result = discover_infrastructure()
+
+    p = generate_plan(result)
+    print_plan(p)
+
+    # Save plan
+    out = Path(output)
+    save_plan(p, out)
+    console.print(f"[green]Plan saved to:[/] {out}")
+    console.print("[dim]Review and edit before running `dispatch deploy`.[/]\n")
+
+    if not accept:
+        console.print("[yellow]Accept this plan? Run again with --accept to proceed.[/]")
+
+
+@cli.command()
+@click.option("--agents", default="agents.yaml", help="Path to agents.yaml")
+@click.option("--tasks", default="tasks", help="Path to tasks directory")
+@click.option("--health", default="health.yaml", help="Path to health.yaml")
+@click.option("--project-name", default="Project", help="Project name for runbook header")
+@click.option("--project-path", default="", help="Absolute path to project on server")
+@click.option("--output", "-o", default="ORCHESTRATOR.md", help="Output runbook path")
+def compile(agents: str, tasks: str, health: str, project_name: str, project_path: str, output: str):
+    """Compile ORCHESTRATOR.md from schemas — the runbook agents re-read every session."""
+    from src.compiler import compile_orchestrator
+
+    agents_p = Path(agents)
+    tasks_p = Path(tasks)
+    health_p = Path(health)
+    output_p = Path(output)
+
+    if not agents_p.exists():
+        console.print(f"[red]Error:[/] {agents_p} not found. Run `dispatch discover` first.")
+        raise SystemExit(1)
+
+    content = compile_orchestrator(
+        agents_path=agents_p,
+        tasks_dir=tasks_p,
+        health_path=health_p,
+        project_name=project_name,
+        project_path=project_path,
+        output=output_p,
+    )
+
+    lines = content.count("\n")
+    tasks_count = content.count("### ")
+    console.print(f"[green]Compiled:[/] {output_p} ({lines} lines, {tasks_count} tasks)")
+    console.print("[dim]This file is auto-generated. Do not hand-edit.[/]")
+
+
 if __name__ == "__main__":
     cli()
