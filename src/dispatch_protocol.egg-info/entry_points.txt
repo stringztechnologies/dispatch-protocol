@@ -1,0 +1,2 @@
+[console_scripts]
+dispatch = src.cli:cli

@@ -1,0 +1,65 @@
+# Agent Registry Schema — Dispatch Protocol
+# Each agent declares its type, capabilities, constraints, and connection method.
+
+agents:
+  openclaw:
+    type: autonomous
+    platform: openclaw
+    capabilities:
+      - run_scripts
+      - web_search
+      - send_telegram
+      - read_write_files
+    constraints:
+      - session_ephemeral
+      - max_concurrent: 2
+    schedule: cron
+    connection:
+      method: ssh+config
+      config_path: /root/.openclaw/cron/jobs.json
+
+  systemd:
+    type: daemon
+    platform: systemd
+    capabilities:
+      - run_scripts
+      - high_frequency
+    constraints:
+      - no_reporting
+      - no_decisions
+      - no_context
+    schedule: timer
+    connection:
+      method: systemctl
+
+  n8n:
+    type: event_driven
+    platform: n8n
+    capabilities:
+      - webhooks
+      - http_requests
+      - conditional_logic
+      - integrations
+    constraints:
+      - no_shell_access
+      - vars_unreliable
+    schedule: triggers+cron
+    connection:
+      method: rest_api
+      api_url: http://localhost:5678
+
+  claude_code:
+    type: interactive
+    platform: claude-code
+    capabilities:
+      - diagnose
+      - fix_code
+      - architect
+      - generate_runbooks
+      - deploy_configs
+    constraints:
+      - human_in_loop
+      - session_based
+    schedule: on_demand
+    connection:
+      method: session

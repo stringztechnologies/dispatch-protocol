@@ -1,0 +1,40 @@
+# Task Contract Schema — Dispatch Protocol
+# A task is a contract: exact command, timeout, success metric, escalation path.
+
+task:
+  id: enrich-curators
+  name: Curator Contact Enrichment
+  owner: openclaw
+  priority: critical
+
+  execute:
+    workdir: /root/.openclaw/workspace/music-promo-engine
+    pre_run: git pull
+    command: python3 scripts/enrich_football_curators.py --limit 200 --all
+    timeout: 600s
+    isolation: true
+
+  schedule:
+    type: interval
+    every: 6h
+
+  success:
+    metric: "enriched_count > 0 OR pending_count == 0"
+    report:
+      channel: telegram
+      template: "Enriched {enriched} curators. {ready} ready for outreach."
+
+  failure:
+    threshold: 3
+    report:
+      channel: telegram
+      template: "Enrichment failed: {error}. {count} consecutive failures."
+    escalate:
+      to: claude_code
+      context: "Enrichment pipeline failing. Last 3 errors attached. Diagnose root cause and fix."
+
+  conflicts:
+    - agent: n8n
+      workflow_id: 7Nql1taOzuZgjtbw
+      resolution: deactivated
+      reason: "$vars broke on community edition, openclaw now owns this"

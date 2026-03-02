@@ -1,0 +1,15 @@
+Metadata-Version: 2.4
+Name: dispatch-protocol
+Version: 0.1.0
+Summary: Operational delegation layer for autonomous AI agents
+Requires-Python: >=3.10
+Requires-Dist: click>=8.0
+Requires-Dist: pyyaml>=6.0
+Requires-Dist: paramiko>=3.0
+Requires-Dist: httpx>=0.25
+Requires-Dist: rich>=13.0
+Requires-Dist: jinja2>=3.1
+Provides-Extra: dev
+Requires-Dist: pytest>=7.0; extra == "dev"
+Requires-Dist: pytest-asyncio; extra == "dev"
+Requires-Dist: ruff; extra == "dev"

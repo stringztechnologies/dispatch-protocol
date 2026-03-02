@@ -1,0 +1,35 @@
+# Health Contract Schema — Dispatch Protocol
+# Every task declares how to verify it's working — not "it ran" but "it produced results."
+
+health:
+  agent_checks:
+    - agent: systemd
+      check: "systemctl is-active music-promo-queue.timer"
+      expect: active
+
+    - agent: n8n
+      check: "http_status http://localhost:5678"
+      expect: "200"
+
+    - agent: openclaw
+      check: "systemctl is-active openclaw-gateway"
+      expect: active
+
+  task_checks:
+    - task: enrich-curators
+      check: "sql SELECT COUNT(*) FROM curators WHERE enriched_at > NOW() - INTERVAL '24 hours'"
+      warn_below: 5
+      critical_below: 0
+
+    - task: send-outreach
+      check: "sql SELECT COUNT(*) FROM outreach_log WHERE email_sent_at > NOW() - INTERVAL '24 hours'"
+      warn_below: 1
+
+    - task: check-replies
+      check: "sql SELECT COUNT(*) FROM replies WHERE checked_at > NOW() - INTERVAL '6 hours'"
+      warn_below: 1
+      critical_below: 0
+
+  escalation:
+    warn: telegram
+    critical: claude_code

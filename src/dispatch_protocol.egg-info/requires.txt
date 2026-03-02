@@ -1,0 +1,11 @@
+click>=8.0
+pyyaml>=6.0
+paramiko>=3.0
+httpx>=0.25
+rich>=13.0
+jinja2>=3.1
+
+[dev]
+pytest>=7.0
+pytest-asyncio
+ruff

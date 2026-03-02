@@ -1,0 +1,12 @@
+README.md
+pyproject.toml
+src/__init__.py
+src/cli.py
+src/compiler.py
+src/runtime.py
+src/dispatch_protocol.egg-info/PKG-INFO
+src/dispatch_protocol.egg-info/SOURCES.txt
+src/dispatch_protocol.egg-info/dependency_links.txt
+src/dispatch_protocol.egg-info/entry_points.txt
+src/dispatch_protocol.egg-info/requires.txt
+src/dispatch_protocol.egg-info/top_level.txt
