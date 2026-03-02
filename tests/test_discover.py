@@ -204,9 +204,9 @@ class TestOpenClawParser:
 
 class TestConflictDetection:
     def test_detects_name_similarity(self):
-        timers = [DiscoveredTimer(name="music-promo-check-replies", schedule="5m", active=True)]
-        workflows = [DiscoveredWorkflow(id="1", name="Playlist Pitch Reply Checker", active=True)]
-        jobs = [DiscoveredJob(name="Check playlist pitch replies", enabled=True)]
+        timers = [DiscoveredTimer(name="check-replies", schedule="5m", active=True)]
+        workflows = [DiscoveredWorkflow(id="1", name="check replies workflow", active=True)]
+        jobs = [DiscoveredJob(name="check-replies-monitor", enabled=True)]
         conflicts = detect_conflicts(timers, workflows, jobs)
         # Should detect at least one conflict — multiple owners for reply checking
         assert len(conflicts) >= 1
