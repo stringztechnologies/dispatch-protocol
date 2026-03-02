@@ -235,22 +235,37 @@ def generate_plan(
             schedule=wf.trigger_type,
         ))
 
-    # Process remaining jobs
+    # Process remaining jobs — these are already assigned to openclaw, keep them there
+    # unless there's a strong reason to move (e.g., high-frequency polling)
     for name, job in job_map.items():
         tid = name.lower().replace(" ", "-")
         if tid in seen_ids:
             continue
         seen_ids.add(tid)
-        needs = _infer_task_needs(name, job=job)
-        best = _best_platform(needs)
         sched = f"{job.schedule_kind} {job.schedule_value}".strip()
+
+        # Jobs already on openclaw stay on openclaw — they were configured there for a reason
+        # Only consider moving if it's a high-frequency polling task (< 5min interval)
+        owner = "openclaw"
+        reason = "Single owner, no conflict — keeping on existing platform"
+        if job.schedule_kind == "every" and job.schedule_value:
+            try:
+                val = job.schedule_value.rstrip("hmsd")
+                unit = job.schedule_value[-1] if job.schedule_value[-1] in "hms" else ""
+                mins = float(val) * (60 if unit == "h" else 1 if unit == "m" else 1/60 if unit == "s" else 1)
+                if mins < 5:
+                    owner = "systemd"
+                    reason = f"High-frequency task ({job.schedule_value}) — better on systemd"
+            except (ValueError, IndexError):
+                pass
+
         plan.proposals.append(TaskProposal(
             task_id=tid,
             task_name=name,
-            proposed_owner=best,
+            proposed_owner=owner,
             current_owners=[{"platform": "openclaw", "name": name}],
             change=ChangeType.KEEP,
-            reason="Single owner, no conflict",
+            reason=reason,
             schedule=sched,
         ))
 

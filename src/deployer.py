@@ -136,18 +136,27 @@ def deploy(
             details=f"Compiled ORCHESTRATOR.md",
         ))
 
-    # Verification pass
+    # Verification pass — use original platform names, not normalized IDs
     console.print("\n[bold]Running verification...[/]")
     for proposal in proposals:
         task_id = proposal["task_id"]
+        task_name = proposal.get("task_name", task_id)
         owner = proposal["proposed_owner"]
         adapter = adapters.get(owner)
         if adapter:
-            vr = adapter.verify_task(task_id)
+            # Try the original name from current_owners first, then task_id
+            verify_name = task_id
+            for co in proposal.get("current_owners", []):
+                if co.get("platform") == owner:
+                    verify_name = co["name"]
+                    break
+            vr = adapter.verify_task(verify_name)
+            if not vr.success and verify_name != task_id:
+                vr = adapter.verify_task(task_id)
             if vr.success:
-                console.print(f"  [green]✓[/] {task_id} ({owner}): {vr.details}")
+                console.print(f"  [green]✓[/] {task_name} ({owner}): {vr.details}")
             else:
-                console.print(f"  [yellow]⚠[/] {task_id} ({owner}): {vr.details}")
+                console.print(f"  [yellow]⚠[/] {task_name} ({owner}): {vr.details}")
 
     return results
 
