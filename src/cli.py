@@ -643,5 +643,55 @@ def compile(agents: str, tasks: str, health: str, project_name: str, project_pat
     console.print("[dim]This file is auto-generated. Do not hand-edit.[/]")
 
 
+@cli.command()
+@click.option("--plan", "plan_path", default="plan.yaml", help="Path to plan.yaml")
+@click.option("--agents", default="agents.yaml", help="Path to agents.yaml")
+@click.option("--tasks", default="tasks", help="Path to tasks directory")
+@click.option("--health", default="health.yaml", help="Path to health.yaml")
+@click.option("--project-name", default="Project", help="Project name for ORCHESTRATOR.md")
+@click.option("--project-path", default="", help="Project path on server")
+@click.option("--orchestrator", default="ORCHESTRATOR.md", help="Output path for compiled runbook")
+@click.option("--ssh", "ssh_host", default=None, help="SSH target for remote deployment")
+@click.option("--n8n-url", default="http://localhost:5678", help="n8n API URL")
+@click.option("--n8n-key", default=None, help="n8n API key")
+@click.option("--jobs-path", default="/root/.openclaw/cron/jobs.json", help="OpenClaw jobs.json path")
+@click.option("--dry-run", is_flag=True, help="Show what would happen without making changes")
+def deploy(
+    plan_path: str, agents: str, tasks: str, health: str,
+    project_name: str, project_path: str, orchestrator: str,
+    ssh_host: str | None, n8n_url: str, n8n_key: str | None,
+    jobs_path: str, dry_run: bool,
+):
+    """Deploy the plan — push configurations to all platforms."""
+    from src.deployer import deploy as run_deploy, print_deploy_results
+
+    plan_p = Path(plan_path)
+    if not plan_p.exists():
+        console.print(f"[red]Error:[/] {plan_p} not found. Run `dispatch plan` first.")
+        raise SystemExit(1)
+
+    if dry_run:
+        console.print("[yellow]DRY RUN — no changes will be made.[/]\n")
+    else:
+        console.print("[bold blue]Deploying...[/]\n")
+
+    results = run_deploy(
+        plan_path=plan_p,
+        agents_path=Path(agents),
+        tasks_dir=Path(tasks),
+        health_path=Path(health),
+        project_name=project_name,
+        project_path=project_path,
+        orchestrator_output=Path(orchestrator),
+        ssh_host=ssh_host,
+        n8n_url=n8n_url,
+        n8n_key=n8n_key,
+        openclaw_jobs_path=jobs_path,
+        dry_run=dry_run,
+    )
+
+    print_deploy_results(results)
+
+
 if __name__ == "__main__":
     cli()
